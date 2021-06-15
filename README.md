@@ -1,10 +1,10 @@
 # Optimal Stereo Camera Calibration via Genetic Algorithms
-> Demonstration code accompanying our submission to the IJCAI 2021 AI4AD workshop.
-> Link to the workshop landing page [_here_](https://www.ai4ad.net).
+> Demonstration code accompanying our submission to the IJCAI 2021 AI4AD [workshop](https://www.ai4ad.net).
+
 
 ## Table of Contents
 * [General Info](#general-information)
-* [Technologies Used](#technologies-used)
+* [Packages](#packages)
 * [Features](#features)
 * [Usage](#usage)
 * [Citation](#citation)
@@ -15,8 +15,8 @@
 - Abstract: Stereo camera real world measurement accuracy is strongly dependent on the camera calibration process, which, in turn, relies on the set of input images and camera model. There is a strong relationship between the quality of the input, the calibration process and the accuracy of the 3D reconstruction. The total set of calibration images has a strong influence on the calibration outcome and selecting the optimal subset of images and parameters for calibration estimation is a problem of combinatorial complexity. In this paper we propose a genetic algorithm calibration image selection process, driven by multiple metrics, that eliminates the image and parameter selection bias and avoids exploratory search over the entire solution space. We numerically compare the contribution of our image and parameter selection algorithm to the overall reconstruction accuracy with the state of the art methods in stereo and mono calibration and show that we can bring substantial improvements to the 3D reconstruction accuracy or mono calibration parameter estimation.
 
 
-## Technologies Used
-- Python 3 - version 3.8
+## Packages
+- Python - version 3.8
 - NumPy - version 1.19
 - OpenCV - version 4.5
 
@@ -57,7 +57,7 @@ MONO = False # Perform mono calibration instead of stereo.
 
 
 ## Citation
-If you found our work useful, please cite it using this entry...
+If you found our work useful, please cite it using this BibTeX entry...
 
 
 ## Contact

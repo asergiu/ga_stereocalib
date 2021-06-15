@@ -28,10 +28,15 @@
 
 
 ## Usage
-How does one go about using it?
-Provide various use cases and code examples here.
+First you need to print a calibration pattern. Please generate one using [this tool](https://calib.io), by choosing a chessboard pattern and preferably setting the width odd and the height even (or viceversa). Keep note of the square size you chose. We used a 9x8 chessboard with square size 7mm. Try to lay the pattern perfectly flat on a hard surface and take a couple of still images of the board under varying poses in front of the camera(s), making sure all the chessboard squares are visible. After acquiring around 30 images, you can either follow our naming convention: "left (ID).jpg" and "right (ID).jpg", or alter the method "init()" in the "cal_wiz_main.py" script, where the loading takes place. Create a directory named "in" inside the root of the project and place the images there.
 
-`write-your-code-here`
+Next, modify the "cal_wiz_constants.py" script to match your setup:
+
+```python
+TOTAL = 30 # Number of acquisitions;
+CHESS = (9 - 1, 8 - 1) # Width and height of the chessboard;
+SQ_MM = 7.00 # Square size in your preferred unit; 3D measurements will be in the same unit.
+```
 
 
 ## Acknowledgements

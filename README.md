@@ -7,7 +7,7 @@
 * [Technologies Used](#technologies-used)
 * [Features](#features)
 * [Usage](#usage)
-* [Acknowledgements](#acknowledgements)
+* [Citation](#citation)
 * [Contact](#contact)
 
 
@@ -38,12 +38,26 @@ CHESS = (9 - 1, 8 - 1) # Width and height of the chessboard;
 SQ_MM = 7.00 # Square size in your preferred unit; 3D measurements will be in the same unit.
 ```
 
+The lower bound for the number of active pairs (selected images) is 15. Please modify it as per your needs. Alter the "cal_wiz_chromosome.py" script on the following line:
 
-## Acknowledgements
-Give credit here.
-- This project was inspired by...
-- This project was based on [this tutorial](https://www.example.com).
-- Many thanks to...
+```python
+MIN_GENES = 15
+```
+Finally, create an "out" folder in the project root and run the script "cal_wiz_main.py". The solution will be found in the "sol.yml" file, containing the intrinsics and extrinsics for the cameras, along some statistics. During the execution, the ETA for the process is displayed in the console.
+
+Of particular interest are a couple of flags located in the "cal_wiz_constants.py" script:
+
+```python
+DEBUG = False # Enable/disable debugging information;
+PARALLEL = True # Use the batch computation of chromosome fitnesses; will use all available CPU cores;
+FLIP = False # Enable/disable horizontal flipping of calibration images;
+FLAGS = False # Enable/disable the optional 8 calibration flags;
+MONO = False # Perform mono calibration instead of stereo.
+```
+
+
+## Citation
+If you found our work useful, please cite it using this entry...
 
 
 ## Contact

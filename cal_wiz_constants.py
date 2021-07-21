@@ -3,9 +3,9 @@ import numpy as np
 
 class Constants:
     INF = 1E6
-    WIDTH = 1600
-    HEIGHT = 1200
-    SCALE = 1
+    WIDTH = 4056
+    HEIGHT = 3040
+    SCALE = 2
     S_WIDTH = WIDTH // SCALE
     S_HEIGHT = HEIGHT // SCALE
     K_MAT = np.array(
@@ -23,5 +23,5 @@ class Constants:
     TOTAL = 30
     CHESS = (9 - 1, 8 - 1)
     CORNER = 11
-    SQ_MM = 7.00
-    VALID_ROI_RATIO = 2 / 3
+    SQ_MM = 15.00
+    VALID_ROI_RATIO = 0

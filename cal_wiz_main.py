@@ -18,14 +18,14 @@ GA_EPOCHS = 25
 GA_POOL_SIZE = 50
 GA_P_MUTATION = 0.25
 GA_P_CROSSOVER = 0.75
-GA_T_CATACLYSM = 0.005
+GA_T_CATACLYSM = 0.01
 GA_P_CATACLYSM = 0.50
 
 ROOT_IN = 'in'
 ROOT_OUT = 'out'
 
-CRIT_MONO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 25, 1E-1)
-CRIT_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 75, 1E-3)
+CRIT_MONO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1E-1)
+CRIT_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1E-9)
 
 OBJ_PTS = np.zeros((Constants.CHESS[0] * Constants.CHESS[1], 3), np.float32)
 OBJ_PTS[:, :2] = np.mgrid[0:Constants.CHESS[0], 0:Constants.CHESS[1]].T.reshape((-1, 2)) * Constants.SQ_MM
@@ -44,10 +44,16 @@ def init():
         chess_img_left = cv2.imread(ROOT_IN + '/left (' + g_str + ').jpg', cv2.IMREAD_GRAYSCALE)
         if Constants.FLIP:
             chess_img_left = cv2.flip(src=chess_img_left, flipCode=1)
+        chess_img_left = cv2.resize(src=chess_img_left,
+                                    dsize=(Constants.S_WIDTH, Constants.S_HEIGHT),
+                                    interpolation=cv2.INTER_LINEAR)
 
         chess_img_right = cv2.imread(ROOT_IN + '/right (' + g_str + ').jpg', cv2.IMREAD_GRAYSCALE)
         if Constants.FLIP:
             chess_img_right = cv2.flip(src=chess_img_right, flipCode=1)
+        chess_img_right = cv2.resize(src=chess_img_right,
+                                     dsize=(Constants.S_WIDTH, Constants.S_HEIGHT),
+                                     interpolation=cv2.INTER_LINEAR)
 
         flg = cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_FAST_CHECK | cv2.CALIB_CB_NORMALIZE_IMAGE
 
@@ -558,6 +564,21 @@ def ga() -> (Chromosome, float):
 
     return garden_of_eden_pool[0], garden_of_eden_fitness[0]
 
+
+print('Splitting stereo images...')
+for idx in range(1, Constants.TOTAL + 1):
+    img_raw = cv2.imread(f'in/raw ({idx}).jpg')
+    img_left = img_raw[0:Constants.HEIGHT, 0: Constants.WIDTH // 2]
+    img_left = cv2.resize(src=img_left,
+                          dsize=(Constants.WIDTH, Constants.HEIGHT),
+                          interpolation=cv2.INTER_LINEAR)
+    cv2.imwrite(f'in/left ({idx}).jpg', img_left)
+    img_right = img_raw[0:Constants.HEIGHT, Constants.WIDTH // 2: Constants.WIDTH]
+    img_right = cv2.resize(src=img_right,
+                           dsize=(Constants.WIDTH, Constants.HEIGHT),
+                           interpolation=cv2.INTER_LINEAR)
+    cv2.imwrite(f'in/right ({idx}).jpg', img_right)
+print('Split stereo images...')
 
 init()
 sol, sol_fit = ga()

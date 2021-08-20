@@ -10,12 +10,11 @@ import numpy as np
 
 from cal_wiz_chromosome import Chromosome
 from cal_wiz_constants import Constants
-from cal_wiz_utils import p3d
 
 seed()
 
-GA_EPOCHS = 25
-GA_POOL_SIZE = 50
+GA_EPOCHS = 50
+GA_POOL_SIZE = 25
 GA_P_MUTATION = 0.25
 GA_P_CROSSOVER = 0.75
 GA_T_CATACLYSM = 0.01
@@ -24,8 +23,8 @@ GA_P_CATACLYSM = 0.50
 ROOT_IN = 'in'
 ROOT_OUT = 'out'
 
-CRIT_MONO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1E-1)
-CRIT_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1E-9)
+CRIT_MONO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 1E-3)
+CRIT_STEREO = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 90, 1E-9)
 
 OBJ_PTS = np.zeros((Constants.CHESS[0] * Constants.CHESS[1], 3), np.float32)
 OBJ_PTS[:, :2] = np.mgrid[0:Constants.CHESS[0], 0:Constants.CHESS[1]].T.reshape((-1, 2)) * Constants.SQ_MM
@@ -55,7 +54,7 @@ def init():
                                      dsize=(Constants.S_WIDTH, Constants.S_HEIGHT),
                                      interpolation=cv2.INTER_LINEAR)
 
-        flg = cv2.CALIB_CB_ADAPTIVE_THRESH | cv2.CALIB_CB_FAST_CHECK | cv2.CALIB_CB_NORMALIZE_IMAGE
+        flg = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FILTER_QUADS + cv2.CALIB_CB_FAST_CHECK
 
         ret_l, corners_l = cv2.findChessboardCorners(
             image=chess_img_left,
@@ -69,7 +68,9 @@ def init():
 
         if not ret_l or not ret_r:
             print('Could not find chessboard corners in image pair ' + g_str + '!')
-            exit(-1)
+            continue
+        else:
+            print('Image pair ' + g_str + ' OK...')
 
         cv2.cornerSubPix(chess_img_left, corners_l, (Constants.CORNER, Constants.CORNER), (-1, -1), CRIT_MONO)
         cv2.cornerSubPix(chess_img_right, corners_r, (Constants.CORNER, Constants.CORNER), (-1, -1), CRIT_MONO)
@@ -82,7 +83,7 @@ def init():
 
 
 def measure_board(stereo: {}, excluded: [int]) -> float:
-    if excluded is None:
+    if excluded is None or len(excluded) == 0:
         count = Chromosome.N_GENES
         img_points_l = np.array(IMG_POINTS_L, dtype=float).reshape((count, Constants.CHESS[1], Constants.CHESS[0], 2))
         img_points_r = np.array(IMG_POINTS_R, dtype=float).reshape((count, Constants.CHESS[1], Constants.CHESS[0], 2))
@@ -93,68 +94,8 @@ def measure_board(stereo: {}, excluded: [int]) -> float:
         img_points_r = [IMG_POINTS_R[idx] for idx in range(Chromosome.N_GENES) if idx not in excluded]
         img_points_r = np.array(img_points_r, dtype=float).reshape((count, Constants.CHESS[1], Constants.CHESS[0], 2))
 
-    if Constants.DEBUG:
-        map_l = cv2.initUndistortRectifyMap(cameraMatrix=stereo['M1'],
-                                            distCoeffs=stereo['D1'],
-                                            R=stereo['R1'],
-                                            newCameraMatrix=stereo['P1'],
-                                            size=stereo['SZ'],
-                                            m1type=cv2.CV_16SC2)
-        map_r = cv2.initUndistortRectifyMap(cameraMatrix=stereo['M2'],
-                                            distCoeffs=stereo['D2'],
-                                            R=stereo['R2'],
-                                            newCameraMatrix=stereo['P2'],
-                                            size=stereo['SZ'],
-                                            m1type=cv2.CV_16SC2)
-        for g in range(Chromosome.N_GENES):
-            g_str = str(Chromosome.GENES[g] + 1)
-
-            chess_img_left = cv2.imread(ROOT_IN + '/left (' + g_str + ').jpg')
-            if Constants.FLIP:
-                chess_img_left = cv2.flip(src=chess_img_left, flipCode=1)
-            chess_img_left = cv2.remap(src=chess_img_left,
-                                       map1=map_l[0],
-                                       map2=map_l[1],
-                                       interpolation=cv2.INTER_LINEAR)
-
-            chess_img_right = cv2.imread(ROOT_IN + '/right (' + g_str + ').jpg')
-            if Constants.FLIP:
-                chess_img_right = cv2.flip(src=chess_img_right, flipCode=1)
-            chess_img_right = cv2.remap(src=chess_img_right,
-                                        map1=map_r[0],
-                                        map2=map_r[1],
-                                        interpolation=cv2.INTER_LINEAR)
-
-            lxy = img_points_l[g].reshape((Constants.CHESS[1] * Constants.CHESS[0], 2))
-            lxy = cv2.undistortPoints(src=lxy,
-                                      cameraMatrix=stereo['M1'],
-                                      distCoeffs=stereo['D1'],
-                                      R=stereo['R1'],
-                                      P=stereo['P1']).reshape((Constants.CHESS[1] * Constants.CHESS[0], 2))
-            lxy = lxy.astype(dtype=int)
-
-            rxy = img_points_r[g].reshape((Constants.CHESS[1] * Constants.CHESS[0], 2))
-            rxy = cv2.undistortPoints(src=rxy,
-                                      cameraMatrix=stereo['M2'],
-                                      distCoeffs=stereo['D2'],
-                                      R=stereo['R2'],
-                                      P=stereo['P2']).reshape((Constants.CHESS[1] * Constants.CHESS[0], 2))
-            rxy = rxy.astype(dtype=int)
-
-            for pt in lxy:
-                cv2.circle(chess_img_left, (pt[0], pt[1]), 5, (0, 255, 0), -1)
-            for pt in rxy:
-                cv2.circle(chess_img_right, (pt[0], pt[1]), 5, (0, 255, 0), -1)
-            cv2.namedWindow("top", cv2.WINDOW_NORMAL)
-            cv2.namedWindow("bot", cv2.WINDOW_NORMAL)
-            cv2.imshow('top', chess_img_left)
-            cv2.imshow('bot', chess_img_right)
-            cv2.waitKey()
-
-    cnt = 0
-    board = 0.0
-
-    diff = stereo['M1'][1, 2] - stereo['M2'][1, 2]
+    err_board = 0.0
+    pts_board = 0
     for id_img in range(count):
         for id_x1 in range(0, Constants.CHESS[0] - 1):
             for id_y1 in range(0, Constants.CHESS[1] - 1):
@@ -162,15 +103,19 @@ def measure_board(stereo: {}, excluded: [int]) -> float:
                 lxy1 = cv2.undistortPoints(src=lxy1,
                                            cameraMatrix=stereo['M1'],
                                            distCoeffs=stereo['D1'],
-                                           R=stereo['R1'],
-                                           P=stereo['P1']).flatten()
+                                           R=None,
+                                           P=stereo['M1']).flatten()
                 rxy1 = img_points_r[id_img][id_y1][id_x1]
                 rxy1 = cv2.undistortPoints(src=rxy1,
                                            cameraMatrix=stereo['M2'],
                                            distCoeffs=stereo['D2'],
-                                           R=stereo['R2'],
-                                           P=stereo['P2']).flatten()
-                xy1 = p3d(lxy1, rxy1, stereo['Q'], diff)
+                                           R=None,
+                                           P=stereo['M2']).flatten()
+                xy1 = cv2.triangulatePoints(projMatr1=stereo['P1'],
+                                            projMatr2=stereo['P2'],
+                                            projPoints1=lxy1.astype(dtype=float),
+                                            projPoints2=rxy1.astype(dtype=float))
+                xy1 = cv2.convertPointsFromHomogeneous(xy1.T).flatten()
 
                 for id_x2 in range(id_x1 + 1, Constants.CHESS[0]):
                     for id_y2 in range(id_y1 + 1, Constants.CHESS[1]):
@@ -178,26 +123,28 @@ def measure_board(stereo: {}, excluded: [int]) -> float:
                         lxy2 = cv2.undistortPoints(src=lxy2,
                                                    cameraMatrix=stereo['M1'],
                                                    distCoeffs=stereo['D1'],
-                                                   R=stereo['R1'],
-                                                   P=stereo['P1']).flatten()
+                                                   R=None,
+                                                   P=stereo['M1']).flatten()
                         rxy2 = img_points_r[id_img][id_y2][id_x2]
                         rxy2 = cv2.undistortPoints(src=rxy2,
                                                    cameraMatrix=stereo['M2'],
                                                    distCoeffs=stereo['D2'],
-                                                   R=stereo['R2'],
-                                                   P=stereo['P2']).flatten()
-                        xy2 = p3d(lxy2, rxy2, stereo['Q'], diff)
+                                                   R=None,
+                                                   P=stereo['M2']).flatten()
+                        xy2 = cv2.triangulatePoints(projMatr1=stereo['P1'],
+                                                    projMatr2=stereo['P2'],
+                                                    projPoints1=lxy2.astype(dtype=float),
+                                                    projPoints2=rxy2.astype(dtype=float))
+                        xy2 = cv2.convertPointsFromHomogeneous(xy2.T).flatten()
 
                         d_computed = np.linalg.norm(xy1 - xy2)
                         d_actual = np.array([id_x1, id_y1], dtype=float) - np.array([id_x2, id_y2], dtype=float)
                         d_actual = np.linalg.norm(d_actual) * Constants.SQ_MM
                         err = abs(d_actual - d_computed)
 
-                        cnt += 1
-                        board += err
-
-    board /= cnt
-    return board
+                        pts_board += 1
+                        err_board += err
+    return err_board / pts_board
 
 
 def measure_epi(stereo: {}, chromosome: Chromosome) -> float:
@@ -239,7 +186,6 @@ def measure_epi(stereo: {}, chromosome: Chromosome) -> float:
 
         err_epi += err
         pts_epi += Constants.CHESS[1] * Constants.CHESS[0]
-
     return err_epi / pts_epi
 
 
@@ -253,14 +199,18 @@ def fitness_mono(chromosome: Chromosome) -> (str, float):
             img_points_l.append(IMG_POINTS_L[g])
             img_points_r.append(IMG_POINTS_R[g])
 
-    mtx_l = np.eye(3, dtype=float)
-    mtx_r = np.eye(3, dtype=float)
+    mtx_l = cv2.initCameraMatrix2D(objectPoints=obj_points,
+                                   imagePoints=img_points_l,
+                                   imageSize=(Constants.S_WIDTH, Constants.S_HEIGHT))
+    mtx_r = cv2.initCameraMatrix2D(objectPoints=obj_points,
+                                   imagePoints=img_points_r,
+                                   imageSize=(Constants.S_WIDTH, Constants.S_HEIGHT))
 
     dst_l = np.zeros(5, dtype=float)
     dst_r = np.zeros(5, dtype=float)
 
     flg = chromosome.get_flags() if Constants.FLAGS else 0
-    flg |= cv2.CALIB_FIX_K3 | cv2.CALIB_FIX_K4 | cv2.CALIB_FIX_K5
+    flg |= cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5
 
     err_rms_l, mtx_l, dst_l, rvec_l, tvec_l = cv2.calibrateCamera(objectPoints=obj_points,
                                                                   imagePoints=img_points_l,
@@ -329,13 +279,18 @@ def fitness_stereo(chromosome: Chromosome) -> (str, float, float, float):
             img_points_l.append(IMG_POINTS_L[g])
             img_points_r.append(IMG_POINTS_R[g])
 
-    mtx_l = np.eye(3, dtype=float)
-    mtx_r = np.eye(3, dtype=float)
+    mtx_l = cv2.initCameraMatrix2D(objectPoints=obj_points,
+                                   imagePoints=img_points_l,
+                                   imageSize=(Constants.S_WIDTH, Constants.S_HEIGHT))
+    mtx_r = cv2.initCameraMatrix2D(objectPoints=obj_points,
+                                   imagePoints=img_points_r,
+                                   imageSize=(Constants.S_WIDTH, Constants.S_HEIGHT))
 
-    dst_l = np.zeros(4, dtype=float)
-    dst_r = np.zeros(4, dtype=float)
+    dst_l = np.zeros(5, dtype=float)
+    dst_r = np.zeros(5, dtype=float)
 
     flg = chromosome.get_flags() if Constants.FLAGS else 0
+    flg |= cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_SAME_FOCAL_LENGTH
 
     err_rms, mtx_l, dst_l, mtx_r, dst_r, r, t, e, f = cv2.stereoCalibrate(
         objectPoints=obj_points,
@@ -358,7 +313,7 @@ def fitness_stereo(chromosome: Chromosome) -> (str, float, float, float):
         R=r,
         T=t,
         alpha=1,
-        flags=0)
+        flags=cv2.CALIB_ZERO_DISPARITY)
 
     valid_area_top = roi_top[3] * roi_top[2]
     valid_area_bot = roi_bot[3] * roi_bot[2]
@@ -542,6 +497,7 @@ def ga() -> (Chromosome, float):
             chromosome_pool[to_reset:] = new_chromosomes
             chromosome_fitness[to_reset:] = new_fitnesses
 
+        print(chromosome_fitness[0], chromosome_fitness[-1])
         end_time = time.time()
         timing.append(end_time - start_time)
         timing_np = np.array(timing, dtype=float)
@@ -568,15 +524,9 @@ def ga() -> (Chromosome, float):
 print('Splitting stereo images...')
 for idx in range(1, Constants.TOTAL + 1):
     img_raw = cv2.imread(f'in/raw ({idx}).jpg')
-    img_left = img_raw[0:Constants.HEIGHT, 0: Constants.WIDTH // 2]
-    img_left = cv2.resize(src=img_left,
-                          dsize=(Constants.WIDTH, Constants.HEIGHT),
-                          interpolation=cv2.INTER_LINEAR)
+    img_left = img_raw[:, 0: Constants.WIDTH]
     cv2.imwrite(f'in/left ({idx}).jpg', img_left)
-    img_right = img_raw[0:Constants.HEIGHT, Constants.WIDTH // 2: Constants.WIDTH]
-    img_right = cv2.resize(src=img_right,
-                           dsize=(Constants.WIDTH, Constants.HEIGHT),
-                           interpolation=cv2.INTER_LINEAR)
+    img_right = img_raw[:, Constants.WIDTH: Constants.WIDTH * 2]
     cv2.imwrite(f'in/right ({idx}).jpg', img_right)
 print('Split stereo images...')
 

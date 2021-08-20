@@ -8,29 +8,6 @@ import numpy as np
 from cal_wiz_constants import Constants
 
 
-def p3d(pt_left: np.ndarray,
-        pt_right: np.ndarray,
-        q: np.ndarray,
-        diff: float) -> np.ndarray:
-    d = pt_left[1] - pt_right[1] - diff
-    point = np.array([pt_left[0], pt_left[1], d], dtype=float).reshape((1, 1, 3))
-    point = cv2.perspectiveTransform(point, q)
-    return point[0]
-
-
-def p2d(pt: np.ndarray,
-        r_vec: np.ndarray,
-        t_vec: np.ndarray,
-        k_mat: np.ndarray,
-        d_vec: np.ndarray) -> np.ndarray:
-    point, _ = cv2.projectPoints(objectPoints=pt,
-                                 rvec=r_vec,
-                                 tvec=t_vec,
-                                 cameraMatrix=k_mat,
-                                 distCoeffs=d_vec)
-    return point
-
-
 def measure_rms(root: str,
                 flip: bool = False,
                 chess: (int, int) = (9 - 1, 8 - 1),

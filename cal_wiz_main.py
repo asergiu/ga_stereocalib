@@ -290,7 +290,7 @@ def fitness_stereo(chromosome: Chromosome) -> (str, float, float, float):
     dst_r = np.zeros(5, dtype=float)
 
     flg = chromosome.get_flags() if Constants.FLAGS else 0
-    flg |= cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_USE_INTRINSIC_GUESS + cv2.CALIB_SAME_FOCAL_LENGTH
+    flg |= cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_USE_INTRINSIC_GUESS
 
     err_rms, mtx_l, dst_l, mtx_r, dst_r, r, t, e, f = cv2.stereoCalibrate(
         objectPoints=obj_points,

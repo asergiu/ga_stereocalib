@@ -27,7 +27,7 @@ class Chromosome:
 
     GENES = [g for g in range(Constants.TOTAL)]
     N_GENES = len(GENES)
-    MIN_GENES = 15
+    MIN_GENES = 20
 
     def is_valid(self) -> bool:
         result = 0

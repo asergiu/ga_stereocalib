@@ -11,8 +11,8 @@ class Constants:
     FLAGS = False
     MONO = False
 
-    TOTAL = 22
+    TOTAL = 30
     CHESS = (9 - 1, 8 - 1)
     CORNER = 11
-    SQ_MM = 28.75
+    SQ_MM = 29
     VALID_ROI_RATIO = 1 / 2

@@ -130,3 +130,7 @@ dmypy.json
 
 # Custom
 *.yml
+*.jpg
+
+/sess_1/
+/sess_2/

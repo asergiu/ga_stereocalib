@@ -1,7 +1,7 @@
 class Constants:
     INF = 1E6
-    WIDTH = 4056
-    HEIGHT = 3040
+    WIDTH = 1920
+    HEIGHT = 1080
     SCALE = 1
     S_WIDTH = WIDTH // SCALE
     S_HEIGHT = HEIGHT // SCALE
@@ -9,10 +9,10 @@ class Constants:
     PARALLEL = False
     FLIP = False
     FLAGS = False
-    MONO = False
+    MONO = True
 
-    TOTAL = 30
-    CHESS = (9 - 1, 8 - 1)
+    TOTAL = 21
+    CHESS = (11 - 1, 8 - 1)
     CORNER = 11
-    SQ_MM = 29
+    SQ_MM = 10.00
     VALID_ROI_RATIO = 1 / 2

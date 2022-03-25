@@ -17,7 +17,7 @@ GA_EPOCHS = 50
 GA_POOL_SIZE = 25
 GA_P_MUTATION = 0.25
 GA_P_CROSSOVER = 0.75
-GA_T_CATACLYSM = 0.01
+GA_T_CATACLYSM = 1e-3
 GA_P_CATACLYSM = 0.50
 
 ROOT_IN = 'in'
@@ -46,6 +46,7 @@ def init():
         chess_img_left = cv2.resize(src=chess_img_left,
                                     dsize=(Constants.S_WIDTH, Constants.S_HEIGHT),
                                     interpolation=cv2.INTER_LINEAR)
+        chess_col_left = cv2.imread(ROOT_IN + '/left (' + g_str + ').jpg')
 
         chess_img_right = cv2.imread(ROOT_IN + '/right (' + g_str + ').jpg', cv2.IMREAD_GRAYSCALE)
         if Constants.FLIP:
@@ -53,6 +54,7 @@ def init():
         chess_img_right = cv2.resize(src=chess_img_right,
                                      dsize=(Constants.S_WIDTH, Constants.S_HEIGHT),
                                      interpolation=cv2.INTER_LINEAR)
+        chess_col_right = cv2.imread(ROOT_IN + '/right (' + g_str + ').jpg')
 
         flg = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FILTER_QUADS + cv2.CALIB_CB_FAST_CHECK
 
@@ -74,6 +76,13 @@ def init():
 
         cv2.cornerSubPix(chess_img_left, corners_l, (Constants.CORNER, Constants.CORNER), (-1, -1), CRIT_MONO)
         cv2.cornerSubPix(chess_img_right, corners_r, (Constants.CORNER, Constants.CORNER), (-1, -1), CRIT_MONO)
+
+        for corner in corners_l:
+            chess_col_left[int(corner[0][1]), int(corner[0][0])] = (0, 255, 0)
+        cv2.imwrite(ROOT_IN + '/left (' + g_str + ')_dbg.png', chess_col_left)
+        for corner in corners_r:
+            chess_col_right[int(corner[0][1]), int(corner[0][0])] = (0, 255, 0)
+        cv2.imwrite(ROOT_IN + '/right (' + g_str + ')_dbg.png', chess_col_right)
 
         OBJ_POINTS.append(OBJ_PTS)
         FILE_NAMES.append(g_str)
@@ -210,7 +219,7 @@ def fitness_mono(chromosome: Chromosome) -> (str, float):
     dst_r = np.zeros(5, dtype=float)
 
     flg = chromosome.get_flags() if Constants.FLAGS else 0
-    flg |= cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5
+    # flg |= cv2.CALIB_FIX_K3 + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5
 
     err_rms_l, mtx_l, dst_l, rvec_l, tvec_l = cv2.calibrateCamera(objectPoints=obj_points,
                                                                   imagePoints=img_points_l,
@@ -290,7 +299,7 @@ def fitness_stereo(chromosome: Chromosome) -> (str, float, float, float):
     dst_r = np.zeros(5, dtype=float)
 
     flg = chromosome.get_flags() if Constants.FLAGS else 0
-    flg |= cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_USE_INTRINSIC_GUESS
+    # flg |= cv2.CALIB_FIX_ASPECT_RATIO + cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_USE_INTRINSIC_GUESS
 
     err_rms, mtx_l, dst_l, mtx_r, dst_r, r, t, e, f = cv2.stereoCalibrate(
         objectPoints=obj_points,
@@ -521,14 +530,14 @@ def ga() -> (Chromosome, float):
     return garden_of_eden_pool[0], garden_of_eden_fitness[0]
 
 
-print('Splitting stereo images...')
-for idx in range(1, Constants.TOTAL + 1):
-    img_raw = cv2.imread(f'in/raw ({idx}).jpg')
-    img_left = img_raw[:, 0: Constants.WIDTH]
-    cv2.imwrite(f'in/left ({idx}).jpg', img_left)
-    img_right = img_raw[:, Constants.WIDTH: Constants.WIDTH * 2]
-    cv2.imwrite(f'in/right ({idx}).jpg', img_right)
-print('Split stereo images...')
+# print('Splitting stereo images...')
+# for idx in range(1, Constants.TOTAL + 1):
+#     img_raw = cv2.imread(f'in/raw ({idx}).jpg')
+#     img_left = img_raw[:, 0: Constants.WIDTH]
+#     cv2.imwrite(f'in/left ({idx}).jpg', img_left)
+#     img_right = img_raw[:, Constants.WIDTH: Constants.WIDTH * 2]
+#     cv2.imwrite(f'in/right ({idx}).jpg', img_right)
+# print('Split stereo images...')
 
 init()
 sol, sol_fit = ga()
